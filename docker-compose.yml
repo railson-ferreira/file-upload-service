@@ -1,0 +1,23 @@
+version: '3'
+
+
+services:
+  web:
+    build:
+      context: ./
+    ports:
+      - "8080:8080"
+  db:
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_DATABASE: 'db'
+      MYSQL_USER: 'weak_user'
+      MYSQL_PASSWORD: 'weak_password'
+      MYSQL_ROOT_PASSWORD: 'weak_root_password'
+    ports:
+      # Opens port 3306 on the container
+      - '3306:3306'
+      # Where our data will be persisted
+    volumes:
+      - ./mysql-data:/var/lib/mysql
