@@ -21,10 +21,9 @@ export async function GET(request: NextRequest){
     }catch (error){
         if(error === "NOT_FOUND"){
             return NextResponse.json({ error: 'Not Found' }, { status: 404 })
-
         }
     }
-    return NextResponse.json({})
+    return NextResponse.json({ error: 'Unknown Error' }, { status: 500 })
 }
 
 export const dynamic = "force-dynamic"
