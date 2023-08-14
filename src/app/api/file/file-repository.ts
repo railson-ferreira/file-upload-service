@@ -16,22 +16,46 @@ export async function saveToDatabase(file: File) {
     // @ts-ignore
     const count = results[0]["COUNT(*)"];
 
-    if (count > 100) {
-        throw "STORAGE_EXCEEDED"
-    }
-
-
     const fileArrayBuffer = await file.arrayBuffer();
     const fileBuffer = arrayBufferToBufferCycle(fileArrayBuffer)
     const fileBase64 = arrayBufferToBase64(fileArrayBuffer)
     const digest = CryptoJS.SHA256(CryptoJS.enc.Base64.parse(fileBase64)).toString();
-    const query = "INSERT INTO files SET ?",
-        values = {
-            name: file.name,
-            digest: digest,
-            mimeType: file.type,
-            bytes: fileBuffer,
-        };
+
+    const selectResults: object[] = await new Promise((resolve, reject) => {
+        connection.query(`SELECT * from files where digest = '${digest}' LIMIT 1`, function (error, results) {
+            if (error) reject(error);
+            resolve(results)
+        });
+    })
+    const found = selectResults.length
+
+    if (!found && count >= Number(process.env.FILES_LIMIT || "100")) {
+        if (process.env.CLEAR_DB_ON_REACH_FILES_LIMIT === "true") {
+            await deleteWithoutWhere()
+        }
+        throw "STORAGE_EXCEEDED"
+    }
+
+    let query: string;
+    const values:{
+        name: string,
+        digest?: string,
+        mimeType: string,
+        bytes?: Buffer,
+    } = {
+        name: file.name,
+        digest: digest,
+        mimeType: file.type,
+        bytes: fileBuffer,
+    }
+    if (found) {
+        delete values.digest;
+        delete values.bytes;
+        query = `UPDATE files SET ? WHERE digest = '${digest}'`;
+    } else {
+        query = "INSERT INTO files SET ?";
+    }
+
 
     await new Promise((resolve, reject) => {
         connection.query(query, values, function (error) {
@@ -70,7 +94,7 @@ export async function getFromDatabase(digest: string) {
     }
 }
 
-export async function getLastTwenty(){
+export async function getLastTwenty() {
     const connection = getDatabaseConnection()
 
     const results: object[] = await new Promise((resolve, reject) => {
@@ -81,7 +105,7 @@ export async function getLastTwenty(){
     })
     connection.end();
 
-    return results.map((result: any)=>{
+    return results.map((result: any) => {
         return {
             name: result["name"] as string,
             digest: result["digest"] as string,
@@ -90,7 +114,7 @@ export async function getLastTwenty(){
     })
 }
 
-export async function deleteWithoutWhere(){
+export async function deleteWithoutWhere() {
     const connection = getDatabaseConnection()
 
     await new Promise((resolve, reject) => {
