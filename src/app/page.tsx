@@ -4,10 +4,16 @@ import FileForm from "@/app/FileForm";
 import Announcement from "@/app/announcement";
 import mimeDb from "@/utils/mime-db.json";
 import {getLastTwenty} from "@/app/api/file/file-repository";
+import DbConnectionErrorStatus from "@/app/DbConnectionErrorStatus";
 
 
 export default async function Home(){
-    const lastTwentyFiles = await getLastTwenty();
+    let lastTwentyFiles = null
+    try{
+        lastTwentyFiles = await getLastTwenty();
+    }catch (e){
+        // Database error
+    }
     return (
         <>
             <Announcement/>
@@ -21,7 +27,8 @@ export default async function Home(){
                 <div>
                     <strong>Last 20 files:</strong>
                     <ul style={{color: primaryColorLight}}>
-                        {lastTwentyFiles.map((file,idx) => {
+                        {lastTwentyFiles == null && <DbConnectionErrorStatus/>}
+                        {lastTwentyFiles?.map((file,idx) => {
                             // @ts-ignore
                             const extension = mimeDb[file.mimeType]?.extensions?.[0];
                             return (

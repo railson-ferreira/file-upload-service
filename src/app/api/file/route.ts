@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
             if(error === "STORAGE_EXCEEDED"){
                 return NextResponse.json({ error: 'Insufficient Storage' }, { status: 507 })
             }else{
-                throw (error)
+                return NextResponse.json({ error: 'Database Unavailable' }, { status: 503 })
             }
         }
     }
@@ -29,8 +29,12 @@ export async function POST(request: NextRequest) {
 
 
 export async function GET(){
-    const lastTwenty = await getLastTwenty()
-    return NextResponse.json(lastTwenty)
+    try{
+        const lastTwenty = await getLastTwenty()
+        return NextResponse.json(lastTwenty)
+    }catch (e) {
+        return NextResponse.json({ error: 'Database Unavailable' }, { status: 503 })
+    }
 }
 
 export const dynamic = "force-dynamic"

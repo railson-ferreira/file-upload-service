@@ -52,9 +52,9 @@ USER nextjs
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
-EXPOSE 8080
+EXPOSE 80
 
-ENV PORT 8080
+ENV PORT 80
 ENV HOSTNAME localhost
 
 CMD ["node", "server.js"]
